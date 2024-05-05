@@ -1,13 +1,13 @@
 package Controllers;
 
 import Entity.Tasks;
-import Entity.Users;
 import Repository.TaskRepository;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Path("/task")
@@ -49,15 +49,11 @@ public class TaskController {
 
     @PUT
     @Path("{id}")
-    public Response update(@PathParam("id") Long id, Tasks task) {
-        System.out.println("el id es: " + id);
-        System.out.println("el user es: " + task);
+    public Response update(@PathParam("id") Long id, String newState) {
         Tasks updateTask = taskRepository.findById(id);
-        System.out.println("el updateUser es: " + updateTask);
         if(updateTask != null) {
-            updateTask.setTitle(task.getTitle());
-            updateTask.setDescription(task.getDescription());
-
+            updateTask.setState(newState);
+            updateTask.setUpdateDate(LocalDate.now());
             taskRepository.persist(updateTask);
             return Response.ok(updateTask).build();
         }

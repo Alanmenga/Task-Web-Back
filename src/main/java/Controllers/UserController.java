@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Path("/user")
@@ -63,16 +64,14 @@ public class UserController {
     @PUT
     @Path("{id}")
     public Response update(@PathParam("id") Long id, Users user) {
-        System.out.println("el id es: " + id);
-        System.out.println("el user es: " + user);
         Users updateUser = userRepository.findById(id);
-        System.out.println("el updateUser es: " + updateUser);
         if(updateUser != null) {
             updateUser.setUsername(user.getUsername());
             updateUser.setPass(user.getPass());
             updateUser.setPhone(user.getPhone());
             updateUser.setAge(user.getAge());
             updateUser.setGender(user.getGender());
+            updateUser.setUpdateDate(LocalDate.now());
 
             userRepository.persist(updateUser);
             return Response.ok(updateUser).build();
@@ -85,9 +84,9 @@ public class UserController {
     public Response login(LoginRequest request) {
         Users user = userRepository.find("username", request.getUsername()).firstResult();
         if(user != null && (request.getPass().equals(user.getPass()))) {
-                return Response.ok("usuario-logueado").build();
+            return Response.ok().entity("usuario-logueado").build();
         } else {
-            return Response.ok("credenciales-invalidas").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("credenciales-invalidas").build();
         }
     }
 

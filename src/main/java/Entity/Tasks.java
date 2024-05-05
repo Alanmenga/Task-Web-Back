@@ -1,5 +1,6 @@
 package Entity;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -17,6 +18,8 @@ public class Tasks {
     private String title;
 
     private String description;
+
+    private String state;
 
     @CreationTimestamp
     private LocalDate create_date;
@@ -48,6 +51,10 @@ public class Tasks {
         this.description = description;
     }
 
+    public String getState() { return state; }
+
+    public void setState(String state) { this.state = state; }
+
     public LocalDate getCreateDate() {
         return create_date;
     }
@@ -66,12 +73,13 @@ public class Tasks {
 
     @Override
     public String toString() {
-        return "Task{" +
+        return "Tasks{" +
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
-                ", createDate=" + create_date +
-                ", updateDate=" + update_date +
+                ", state=" + state +
+                ", create_date=" + create_date +
+                ", update_date=" + update_date +
                 '}';
     }
 }
