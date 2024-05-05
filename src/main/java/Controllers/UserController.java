@@ -4,6 +4,9 @@ import Entity.Users;
 import Repository.UserRepository;
 import Util.LoginRequest;
 import jakarta.inject.Inject;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
@@ -84,9 +87,19 @@ public class UserController {
     public Response login(LoginRequest request) {
         Users user = userRepository.find("username", request.getUsername()).firstResult();
         if(user != null && (request.getPass().equals(user.getPass()))) {
-            return Response.ok().entity("usuario-logueado").build();
+            JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
+            responseBuilder.add("success", true);
+            responseBuilder.add("message", "usuario-logueado");
+            JsonObject responseJson = responseBuilder.build();
+            return Response.ok().entity(responseJson).build();
+            //return Response.ok().entity("usuario-logueado").build();
         } else {
-            return Response.status(Response.Status.UNAUTHORIZED).entity("credenciales-invalidas").build();
+            JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
+            responseBuilder.add("success", false);
+            responseBuilder.add("message", "credenciales-invalidas");
+            JsonObject responseJson = responseBuilder.build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity(responseJson).build();
+            //return Response.status(Response.Status.UNAUTHORIZED).entity("credenciales-invalidas").build();
         }
     }
 
