@@ -21,6 +21,8 @@ public class Tasks {
 
     private String state;
 
+    private Long user_id;
+
     @CreationTimestamp
     private LocalDate create_date;
 
@@ -54,6 +56,14 @@ public class Tasks {
     public String getState() { return state; }
 
     public void setState(String state) { this.state = state; }
+
+    public Long getUser_id() {
+        return user_id;
+    }
+
+    public void setUser_id(Long user_id) {
+        this.user_id = user_id;
+    }
 
     public LocalDate getCreateDate() {
         return create_date;

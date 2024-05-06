@@ -23,6 +23,13 @@ public class TaskController {
     }
 
     @GET
+    @Path("/user/{userId}")
+    public Response  getTasksByUserId(@PathParam("userId") Long userId) {
+        List<Tasks> tasks = taskRepository.find("user_id", userId).list();
+        return Response.ok(tasks).build();
+    }
+
+    @GET
     @Path("{id}")
     public Response retrieve(@PathParam("id") Long id) {
         var task = taskRepository.findById(id);
@@ -34,6 +41,7 @@ public class TaskController {
 
     @POST
     public Tasks insert(Tasks insertedTask) {
+        System.out.println("esta es la tarea ingresada" + insertedTask);
         taskRepository.persist(insertedTask);
         return insertedTask;
     }

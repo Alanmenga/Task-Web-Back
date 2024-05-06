@@ -116,27 +116,26 @@ public class UserController {
                 KeyPair keyPair = userService.getKeyPair();
                 PrivateKey privateKey = keyPair.getPrivate();
                 String desencryptedPassword = userService.decryptPassword(encryptedPassword, privateKey);
-                System.out.println("Contraseña desencriptada: " + desencryptedPassword);
 
                 if(user != null && (request.getPass().equals(desencryptedPassword))) {
                     Long userId = user.getId(); // Obtén el ID de usuario
                     String sessionId = sessionService.createSession(userId);
                     String csrfToken = sessionService.generateCSRFToken(sessionId);
-                    JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
-                    responseBuilder.add("success", true);
-                    responseBuilder.add("message", "usuario-logueado");
-                    JsonObject responseJson = responseBuilder.build();
-                    return Response.ok().header("Authorization", sessionId)
-                                        .header("X-CSRF-Token", csrfToken)
-                                        .entity(responseJson).build();
-                    //return Response.ok().entity("usuario-logueado").build();
+                    JsonObject responseJson = Json.createObjectBuilder()
+                            .add("success", true)
+                            .add("message", "usuario-logueado")
+                            .add("sessionId", sessionId)
+                            .add("csrfToken", csrfToken)
+                            .add("user_id", userId)
+                            .build();
+                    String jsonResponse = responseJson.toString();
+                    return Response.ok().entity(jsonResponse).build();
                 } else {
                     JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
                     responseBuilder.add("success", false);
                     responseBuilder.add("message", "credenciales-invalidas");
                     JsonObject responseJson = responseBuilder.build();
                     return Response.status(Response.Status.UNAUTHORIZED).entity(responseJson).build();
-                    //return Response.status(Response.Status.UNAUTHORIZED).entity("credenciales-invalidas").build();
                 }
 
             } catch (Exception e) {

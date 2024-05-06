@@ -16,9 +16,6 @@ public class UserService {
     @Inject
     private RSAKeyPairManager keyPairManager;
 
-
-
-
     public KeyPair getKeyPair() {
         return keyPairManager.getKeyPair();
     }
