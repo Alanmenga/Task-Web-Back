@@ -2,6 +2,8 @@ package Controllers;
 
 import Entity.Users;
 import Repository.UserRepository;
+import Services.SessionService;
+import Services.UserService;
 import Util.LoginRequest;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
@@ -11,6 +13,9 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,11 +25,17 @@ public class UserController {
 
     @Inject
     private UserRepository userRepository;
+    @Inject
+    private UserService userService;
+    @Inject
+    private SessionService sessionService;
+
 
     @GET
     public List<Users> index() {
         return userRepository.listAll();
     }
+
 
     @GET
     @Path("{id}")
@@ -38,6 +49,17 @@ public class UserController {
 
     @POST
     public Users insert(Users insertedUser) {
+        String passInserted = insertedUser.getPass();
+
+        try {
+            KeyPair keyPair = userService.getKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            String encryptedPassword = userService.encryptPassword(passInserted, publicKey);
+            insertedUser.setPass(encryptedPassword);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         userRepository.persist(insertedUser);
         return insertedUser;
     }
@@ -86,21 +108,52 @@ public class UserController {
     @Path("/login")
     public Response login(LoginRequest request) {
         Users user = userRepository.find("username", request.getUsername()).firstResult();
-        if(user != null && (request.getPass().equals(user.getPass()))) {
-            JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
-            responseBuilder.add("success", true);
-            responseBuilder.add("message", "usuario-logueado");
-            JsonObject responseJson = responseBuilder.build();
-            return Response.ok().entity(responseJson).build();
-            //return Response.ok().entity("usuario-logueado").build();
+        String encryptedPassword = user.getPass();
+
+
+        if (user != null) {
+            try {
+                KeyPair keyPair = userService.getKeyPair();
+                PrivateKey privateKey = keyPair.getPrivate();
+                String desencryptedPassword = userService.decryptPassword(encryptedPassword, privateKey);
+                System.out.println("Contraseña desencriptada: " + desencryptedPassword);
+
+                if(user != null && (request.getPass().equals(desencryptedPassword))) {
+                    Long userId = user.getId(); // Obtén el ID de usuario
+                    String sessionId = sessionService.createSession(userId);
+                    String csrfToken = sessionService.generateCSRFToken(sessionId);
+                    JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
+                    responseBuilder.add("success", true);
+                    responseBuilder.add("message", "usuario-logueado");
+                    JsonObject responseJson = responseBuilder.build();
+                    return Response.ok().header("Authorization", sessionId)
+                                        .header("X-CSRF-Token", csrfToken)
+                                        .entity(responseJson).build();
+                    //return Response.ok().entity("usuario-logueado").build();
+                } else {
+                    JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
+                    responseBuilder.add("success", false);
+                    responseBuilder.add("message", "credenciales-invalidas");
+                    JsonObject responseJson = responseBuilder.build();
+                    return Response.status(Response.Status.UNAUTHORIZED).entity(responseJson).build();
+                    //return Response.status(Response.Status.UNAUTHORIZED).entity("credenciales-invalidas").build();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
-            JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
-            responseBuilder.add("success", false);
-            responseBuilder.add("message", "credenciales-invalidas");
-            JsonObject responseJson = responseBuilder.build();
-            return Response.status(Response.Status.UNAUTHORIZED).entity(responseJson).build();
-            //return Response.status(Response.Status.UNAUTHORIZED).entity("credenciales-invalidas").build();
+            System.out.println("Usuario no encontrado.");
         }
+
+        // Si no se encuentra el usuario, devolver un mensaje de credenciales inválidas
+        JsonObjectBuilder responseBuilder = Json.createObjectBuilder();
+        responseBuilder.add("success", false);
+        responseBuilder.add("message", "credenciales-invalidas");
+        JsonObject responseJson = responseBuilder.build();
+        return Response.status(Response.Status.UNAUTHORIZED).entity(responseJson).build();
+
+
     }
 
 
